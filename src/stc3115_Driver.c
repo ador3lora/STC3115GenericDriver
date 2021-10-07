@@ -18,9 +18,9 @@
 *******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#include "stc3115_Driver.h" 
+#include "stc3115_Driver.h"
 #include "stc3115_Battery.h"
-#include "stc3115_I2C.h" 
+#include "stc3115_I2C.h"
 
 /*
   ===============================================================================
@@ -29,104 +29,104 @@
 
 	This driver is dedicated to STC3115 battery monitoring IC management, it allows
 	the stc3115 to be configured, and used without external software.
-	
-	++ stc3115_Driver.c file contains the functions to initialize and report the 
+
+	++ stc3115_Driver.c file contains the functions to initialize and report the
 			battery state based on STC3115 algorithms.
-		- Driver contains its own I2C access functions, they have to be linked with 
-			I2C driver interface  functions. HW system have to support multi I2C access 
-			commands to guaranty the data integrity during the 16 bits register R/W 
+		- Driver contains its own I2C access functions, they have to be linked with
+			I2C driver interface  functions. HW system have to support multi I2C access
+			commands to guaranty the data integrity during the 16 bits register R/W
 			operations.
-		- First part of the driver is composed by driver own functions, which should 
+		- First part of the driver is composed by driver own functions, which should
 			not be accessed by external functions.
-		- Then the GasGauge functions are the main interface functions which have to 
-			be used by the application to initialize, monitor and stop the STC3115 
+		- Then the GasGauge functions are the main interface functions which have to
+			be used by the application to initialize, monitor and stop the STC3115
 			device.
-		- Power saving functions can be used to manage the STC3115 operating mode 
-			(mixed mode or Voltage mode). These two functions have to be called by 
-			external program to switch the STC3115 operating mode after STC3115 
+		- Power saving functions can be used to manage the STC3115 operating mode
+			(mixed mode or Voltage mode). These two functions have to be called by
+			external program to switch the STC3115 operating mode after STC3115
 			initialization.
 		- Alarm management functions have to be called to set, stop, get, clear and
 			change alarm thresholds after STC3115 initialization.
-		- The relaxation register can also be updated after initialization thanks to 
+		- The relaxation register can also be updated after initialization thanks to
 			the STC3115_RelxTmrSet.
-	
-	++ stc3115_Driver.h file defines the STC3115 static numbers, driver API 
-			structures and driver API functions.	
+
+	++ stc3115_Driver.h file defines the STC3115 static numbers, driver API
+			structures and driver API functions.
 		- STC3115_BatteryData_TypeDef is filled by the driver with battery state.
-		- STC3115_ConfigData_TypeDef is filled by the driver with battery 
+		- STC3115_ConfigData_TypeDef is filled by the driver with battery
 			configuration data from stc3115_Battery.h
 		- RAMData is the RAM memory map description, used internally of the driver.
 			Have no to be modified by external accesses.
-	
-	++ stc3115_Battery.h file is used to describe the battery and application 
+
+	++ stc3115_Battery.h file is used to describe the battery and application
 			configurations.
-	
-	++ stc3115_I2C.c file is used to interface STC3115 driver I2C functions with 
+
+	++ stc3115_I2C.c file is used to interface STC3115 driver I2C functions with
 		application I2C functions.
-		
+
 	++ stc3115_I2C.h file contains the stc3115_I2C.c function declarations.
 
   ===============================================================================
                     ##### How to use STC3115 driver #####
   ===============================================================================
 
-	++ 	Update 	I2C_Write and I2C_Read functions with application I2C driver functions 
+	++ 	Update 	I2C_Write and I2C_Read functions with application I2C driver functions
 		in stc3115_I2C.C file.
-							
-	++	Initialize STC3115 dedicated hardware externally of the driver (I2C 
-			interface, GPIOs...)			
-	
+
+	++	Initialize STC3115 dedicated hardware externally of the driver (I2C
+			interface, GPIOs...)
+
 	++	Fill STC3115_Battery.h with battery and application parameters
-	
+
 	++  Call one time the the GasGauge_Initialization function
-	
+
 			Parameters:
-				- STC3115_ConfigData_TypeDef parameter is filled with STC3115_Battery.h 
+				- STC3115_ConfigData_TypeDef parameter is filled with STC3115_Battery.h
 					data by the driver
-				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm 
+				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm
 					results and returns the battery state to application
-				
+
 			Function description:
 				- Initialize SW structures
-				- Check battery history: new battery, swapped battery, already connected 
+				- Check battery history: new battery, swapped battery, already connected
 					battery
 				- Initializes STC3115 registers accordingly to battery history
 				- Initializes STC3115 RAM memory accordingly to battery history
-			
+
 			Returns:
-				- (-1) is returned when STC3115 cannot be accessed: I2C bus is not 
+				- (-1) is returned when STC3115 cannot be accessed: I2C bus is not
 					properly configured or STC3115 is not power supplied
 				- (0) is returned if initialization succeeds.
-			
-	++ Call the GasGauge_Task function when battery information is needed: 
+
+	++ Call the GasGauge_Task function when battery information is needed:
 			every 1 to 30 seconds (no frequency accuracy needed)
-		
+
 			Parameters:
-				- STC3115_ConfigData_TypeDef parameter is used in case of STC3115 has to be 
+				- STC3115_ConfigData_TypeDef parameter is used in case of STC3115 has to be
 					initialized again
-				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm 
+				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm
 					results and returns the battery state to application
-				
+
 			Function description:
 				- Check STC3115, battery and application state
 				- if battery is well present battery data are updated
 				- Available battery state information are returned
-			
+
 			Returns:
-				- (-1) is returned when STC3115 cannot be accessed (I2C bus is busy or 
+				- (-1) is returned when STC3115 cannot be accessed (I2C bus is busy or
 					STC3115 is not power supplied) or when BATD/CD pin is in high level state.
 				- (0) is returned if only battery SOC,Voltage and OCV data are available
 				- (1) is returned if every STC3115_BatteryData_TypeDef data are available.
-				
+
 	++ call the GasGauge_Stop function during the application switch off sequence
 		 This will stop the STC3115 and save energy. This will help to recover the
 		 battery context during the next GasGauge_Initialization function.
-				
+
 	++ GasGauge_Reset function has not to be used by default.
 		 This function has to be called only in abnormal use cases.
 				- (-1) is returned when STC3115 cannot be stopped
 				- (0) is returned if reset operation succeeds
-				
+
 */
 
 /* ******************************************************************************** */
@@ -150,7 +150,7 @@ static int STC3115_ReadByte(int RegAddress)
   int res;
 
   res = I2C_Read(1, RegAddress , data);
-	
+
   if (res >= 0)
   {
     /* no error */
@@ -177,7 +177,7 @@ static int STC3115_WriteByte(int RegAddress, unsigned char Value)
 
   data[0]= Value;
   res = I2C_Write(1, RegAddress , data);
-	
+
   return(res);
 
 }
@@ -196,7 +196,7 @@ static int STC3115_ReadWord(int RegAddress)
   int res;
 
   res = I2C_Read(2, RegAddress , data);
-  
+
   if (res >= 0)
   {
     /* no error */
@@ -216,7 +216,7 @@ int STC3115_ReadUnsignedWord(unsigned short RegAddress, unsigned short * RegData
   int status;
 
   status = I2C_Read(2, RegAddress , data8);
-  
+
   if (status >= 0)
   {
     /* no error */
@@ -241,11 +241,11 @@ static int STC3115_WriteWord(int RegAddress, int Value)
   int res;
   unsigned char data[2];
 
-  data[0]= Value & 0xff; 
+  data[0]= Value & 0xff;
   data[1]= (Value>>8) & 0xff;
-  
+
   res = I2C_Write(2, RegAddress , data);
-	
+
   return(res);
 
 }
@@ -261,7 +261,7 @@ static int STC3115_ReadBytes(unsigned char *data,int RegAddress,int nbr)
   int res;
 
   res = I2C_Read(nbr, RegAddress , data);
-  
+
   return(res);
 }
 
@@ -277,7 +277,7 @@ static int STC3115_WriteBytes(unsigned char *data,int RegAddress,int nbr)
   int res;
 
   res = I2C_Write(nbr, RegAddress , data);
-	
+
   return(res);
 }
 
@@ -350,11 +350,11 @@ int STC3115_CheckI2cDeviceId(void)
 *******************************************************************************/
 int STC3115_GetRunningCounter(void)
 {
-  unsigned short value;
+  int value;
   int status;
 
   /* read STC3115_REG_COUNTER */
-  status = STC3115_ReadUnsignedWord(STC3115_REG_COUNTER, &value);
+  status = STC3115_ReadUnsignedWord(STC3115_REG_COUNTER, (unsigned short *)&value);
 
   if(status < 0) //error
 	  value = -1;
@@ -371,33 +371,33 @@ int STC3115_GetRunningCounter(void)
 static void STC3115_SetParamAndRun(STC3115_ConfigData_TypeDef *ConfigData)
 {
   int value;
-  
+
   /* set GG_RUN=0 before changing algo parameters */
   STC3115_WriteByte(STC3115_REG_MODE, STC3115_REGMODE_DEFAULT_STANDBY);
-  
+
   /* init OCV curve */
 	STC3115_WriteBytes((unsigned char*) ConfigData->OCVOffset, STC3115_REG_OCVTAB, STC3115_OCVTAB_SIZE);
-  
+
   /* set alm level if different from default */
-  if (ConfigData->Alm_SOC !=0 )   
-     STC3115_WriteByte(STC3115_REG_ALARM_SOC,ConfigData->Alm_SOC*2); 
-  if (ConfigData->Alm_Vbat !=0 ) 
+  if (ConfigData->Alm_SOC !=0 )
+     STC3115_WriteByte(STC3115_REG_ALARM_SOC,ConfigData->Alm_SOC*2);
+  if (ConfigData->Alm_Vbat !=0 )
   {
     value= ((long)(ConfigData->Alm_Vbat << 9) / VoltageFactor); /* LSB=8*2.2mV */
     STC3115_WriteByte(STC3115_REG_ALARM_VOLTAGE, value);
   }
-    
+
   /* relaxation timer */
-  if (ConfigData->Rsense !=0 )  
+  if (ConfigData->Rsense !=0 )
   {
     value= ((long)(ConfigData->RelaxCurrent << 9) / (CurrentFactor / ConfigData->Rsense));   /* LSB=8*5.88uV */
-    STC3115_WriteByte(STC3115_REG_CURRENT_THRES,value); 
+    STC3115_WriteByte(STC3115_REG_CURRENT_THRES,value);
   }
-  
+
   /* set parameters VM_CNF and CC_CNF */
   if (ConfigData->CC_cnf != 0 ) STC3115_WriteWord(STC3115_REG_CC_CNF, ConfigData->CC_cnf);
   else STC3115_WriteWord(STC3115_REG_CC_CNF, 395); //force writing a default value at startup
-  
+
   if (ConfigData->VM_cnf !=0 ) STC3115_WriteWord(STC3115_REG_VM_CNF, ConfigData->VM_cnf);
   else STC3115_WriteWord(STC3115_REG_VM_CNF, 321); //force writing a default value at startup
 
@@ -406,7 +406,7 @@ static void STC3115_SetParamAndRun(STC3115_ConfigData_TypeDef *ConfigData)
 
   STC3115_WriteByte(STC3115_REG_CTRL,0x03);  /*   clear PORDET, BATFAIL, free ALM pin, reset conv counter */
   STC3115_WriteByte(STC3115_REG_MODE, STC3115_GG_RUN | (STC3115_VMODE * ConfigData->Vmode) | (STC3115_ALM_ENA * ALM_EN));  /*   set GG_RUN=1, set mode, set alm enable */
- 
+
 }
 
 
@@ -433,22 +433,25 @@ static int STC3115_Startup(STC3115_ConfigData_TypeDef *ConfigData)
 
 	/* Check OCV integrity after reset: it must be above or equal to OCV min = 3300 (mV) + OCVOffset[0] (0.55mV)  */
 	ocv_min = 6000 + OCVOffset[0];
-	if (ocv <= ocv_min) 
+	if (ocv <= ocv_min)
 	{
 		HRSOC = 0;
 		res = STC3115_WriteWord(STC3115_REG_SOC, HRSOC); //force both SOC and OCV to 0
 		STC3115_SetParamAndRun(ConfigData);  /* set STC3115 parameters and run it  */
 	}
-	else 
+	else
 	{
 		STC3115_SetParamAndRun(ConfigData);  /* set STC3115 parameters and run it  */
-		
+
 		/* rewrite ocv to start SOC with updated OCV curve */
 		res = STC3115_WriteWord(STC3115_REG_OCV, ocv);
 	}
 
 	return(0);
 }
+
+static int STC3115_UpdateRamCRC(void);
+static int STC3115_WriteDataToRam(unsigned char *RamData);
 
 /*******************************************************************************
 * Function Name  : STC31xx_SaveBackupSocToRam
@@ -459,7 +462,7 @@ static int STC3115_Startup(STC3115_ConfigData_TypeDef *ConfigData)
 int STC31xx_SaveBackupSocToRam(unsigned char * p_RamData)
 {
 	int status;
-	  
+
 	/* update the RAM crc8 */
 	STC3115_UpdateRamCRC();
 
@@ -472,7 +475,7 @@ int STC31xx_SaveBackupSocToRam(unsigned char * p_RamData)
 * Function Name  : STC3115_RestoreFromRam
 * Description    :  Restore STC3115 previous good state from values stored in internal 16byte RAM
 * Input          : None
-* Return         : 
+* Return         :
 *******************************************************************************/
 static int STC3115_RestoreFromRam(STC3115_ConfigData_TypeDef *ConfigData)
 {
@@ -481,7 +484,7 @@ static int STC3115_RestoreFromRam(STC3115_ConfigData_TypeDef *ConfigData)
   /* check STC31xx status */
   res = STC3115_GetStatusWord();
   if (res<0) return(res);
- 
+
   STC3115_SetParamAndRun(ConfigData);  /* set STC3115 parameters and run it  */
 
 #ifdef OCV_RAM_BACKUP
@@ -491,7 +494,7 @@ static int STC3115_RestoreFromRam(STC3115_ConfigData_TypeDef *ConfigData)
   {
 	STC3115_WriteWord(STC3115_REG_SOC, RAMData.reg.HRSOC); //force a new SoC to the fuel gauge
   }
-#endif  
+#endif
 
   return(0);
 }
@@ -508,7 +511,7 @@ static int STC3115_RestoreFromRam(STC3115_ConfigData_TypeDef *ConfigData)
 static int STC3115_Powerdown(void)
 {
   int res;
-  
+
   /* write 0x01 into the REG_CTRL to release IO0 pin open, */
   STC3115_WriteByte(STC3115_REG_CTRL, 0x01);
 
@@ -524,7 +527,7 @@ static int STC3115_Powerdown(void)
 
 /*******************************************************************************
 * Function Name  : STC3115_conv
-* Description    : conversion utility 
+* Description    : conversion utility
 *  convert a raw 16-bit value from STC3115 registers into user units (mA, mAh, mV, °C)
 *  (optimized routine for efficient operation on 8-bit processors such as STM8)
 * Input          : value, factor
@@ -533,10 +536,10 @@ static int STC3115_Powerdown(void)
 static int STC3115_conv(short value, unsigned short factor)
 {
   int v;
-  
+
   v= ( (long) value * factor ) >> 11;
   v= (v+1)/2;
-  
+
   return (v);
 }
 
@@ -556,9 +559,9 @@ static int STC3115_ReadBatteryData(STC3115_BatteryData_TypeDef *BatteryData)
 
   /* read STC3115 registers 0 to 14 */
 	res = STC3115_ReadBytes(data, 0, 15);
-	
+
   if (res<0) return(res);  /* read failed */
-	
+
   /* fill the battery status data */
   /* SOC */
   value=data[3]; value = (value<<8) + data[2];
@@ -583,7 +586,7 @@ static int STC3115_ReadBatteryData(STC3115_BatteryData_TypeDef *BatteryData)
   BatteryData->Voltage = value;  /* result in mV */
 
   /* temperature */
-  value=data[10]; 
+  value=data[10];
   if (value>=0x80) value -= 0x100;  /* convert to signed value */
   BatteryData->Temperature = value*10;  /* result in 0.1°C */
 
@@ -591,15 +594,15 @@ static int STC3115_ReadBatteryData(STC3115_BatteryData_TypeDef *BatteryData)
   value=data[14]; value = (value<<8) + data[13];
   value &= 0x3fff; /* mask unused bits */
   if (value>=0x02000) value -= 0x4000;  /* convert to signed value */
-  value = STC3115_conv(value,VoltageFactor);  
+  value = STC3115_conv(value,VoltageFactor);
   value = (value+2) / 4;  /* divide by 4 with rounding */
   BatteryData->OCV = value;  /* result in mV */
-  
+
 //  res=STC3115_Read(1, STC3115_REG_RELAX_COUNT, data);
 //  if (res<0) return(res);  /* read failed */
 //  BatteryData->RelaxTimer = data[0];
 
-  
+
   return(STC3115_OK);
 }
 
@@ -640,7 +643,7 @@ static int STC3115_CalcRamCRC8(unsigned char *data, int n)
   for (i=0;i<n;i++)
   {
     crc ^= data[i];
-    for (j=0;j<8;j++) 
+    for (j=0;j<8;j++)
     {
       crc <<= 1;
       if (crc & 0x100)  crc ^= 7;
@@ -659,7 +662,7 @@ static int STC3115_CalcRamCRC8(unsigned char *data, int n)
 static int STC3115_UpdateRamCRC(void)
 {
   int res;
-  
+
   res=STC3115_CalcRamCRC8(RAMData.db, STC3115_RAM_SIZE-1);
   RAMData.db[STC3115_RAM_SIZE-1] = res;   /* last byte holds the CRC */
   //RAMData.reg.CRC = res;   /* last byte holds the CRC */
@@ -677,14 +680,14 @@ static void STC3115_InitRamData(STC3115_ConfigData_TypeDef *ConfigData)
   int index;
 
   //Set full RAM tab to 0
-  for (index=0;index<STC3115_RAM_SIZE;index++) 
+  for (index=0;index<STC3115_RAM_SIZE;index++)
     RAMData.db[index]=0;
-  
+
   //Fill RAM regs
   RAMData.reg.TestWord=RAM_TESTWORD;  /* Fixed word to check RAM integrity */
   RAMData.reg.CC_cnf = ConfigData->CC_cnf;
   RAMData.reg.VM_cnf = ConfigData->VM_cnf;
-  
+
   /* update the crc */
   STC3115_UpdateRamCRC();
 }
@@ -707,14 +710,14 @@ int GasGauge_Initialization(STC3115_ConfigData_TypeDef *ConfigData, STC3115_Batt
   int OCVOffset[16] = OCV_OFFSET_TAB;
 
   /*** Fill configuration structure parameters ***/
-  
+
   ConfigData->Vmode = VMODE;
 
   if(RSENSE!=0)	ConfigData->Rsense = RSENSE;
   else ConfigData->Rsense = 10; // default value to avoid division by 0
-  
+
   ConfigData->CC_cnf = (BATT_CAPACITY * ConfigData->Rsense * 250 + 6194) / 12389;
-	
+
   if(BATT_RINT!=0)	ConfigData->VM_cnf = (BATT_CAPACITY * BATT_RINT * 50 + 24444) / 48889;
   else ConfigData->VM_cnf = (BATT_CAPACITY * 200 * 50 + 24444) / 48889; // default value
 
@@ -724,33 +727,33 @@ int GasGauge_Initialization(STC3115_ConfigData_TypeDef *ConfigData, STC3115_Batt
 	if(OCVOffset[loop] < -127) OCVOffset[loop] = -127;
 	 ConfigData->OCVOffset[loop] = OCVOffset[loop];
   }
-	
-  ConfigData->Cnom = BATT_CAPACITY; 
+
+  ConfigData->Cnom = BATT_CAPACITY;
   ConfigData->RelaxCurrent = BATT_CAPACITY / 20;
-  
+
   ConfigData->Alm_SOC = ALM_SOC;
   ConfigData->Alm_Vbat = ALM_VBAT;
-  
-  
-  /*** Initialize Gas Gauge system ***/ 
-  
+
+
+  /*** Initialize Gas Gauge system ***/
+
   /*Battery presence status init*/
   BatteryData->Presence = 1;
 
-  /* check RAM data validity */ 
+  /* check RAM data validity */
   //refer to AN4324, Figure 16: STC3115 initialization type selection flowchart
   {
 	// ** Internal RAM purpose: **
 	// The STC3115 device embeds a 16-byte RAM memory area.
-	// The registers of this area can be used to periodically save the battery status. 
+	// The registers of this area can be used to periodically save the battery status.
 	// This allows battery information to be recovered when the application is stopped but the battery is not unplugged.
 	//
 	// Typical use case of STC3115 Restoration is:
-	// User Platform power down (but stc3115 set in standby mode), no battery removal, and then Platform power up (stc3115 set in running mode). So Battery state context can be restored. 
+	// User Platform power down (but stc3115 set in standby mode), no battery removal, and then Platform power up (stc3115 set in running mode). So Battery state context can be restored.
 	// If the battery is removed or in case of soft reset (STC3115 soft reset), RAM content is reset, the SOC tracking will restart from zero (not use the RAM content). So there is no restoration in this condition.
 
 	  STC3115_ReadRamData(RAMData.db);
- 
+
 	  if ( (RAMData.reg.TestWord != RAM_TESTWORD) || (STC3115_CalcRamCRC8(RAMData.db,STC3115_RAM_SIZE)!=0) ) //RAM invalid
 	  {
 		// RAM is empty (Fuel gauge first power-up)
@@ -758,7 +761,7 @@ int GasGauge_Initialization(STC3115_ConfigData_TypeDef *ConfigData, STC3115_Batt
 		// or RAM corrupted (bad CRC)
 		// => Full initialisation:  STC3115 init + RAM init
 		//    e.g. New battery plugged-in, using the initial battery model.
-		
+
 		STC3115_InitRamData(ConfigData);
 		res=STC3115_Startup(ConfigData);  /* return -1 if I2C error or STC3115 not present */
 	  }
@@ -787,7 +790,7 @@ int GasGauge_Initialization(STC3115_ConfigData_TypeDef *ConfigData, STC3115_Batt
 		STC3115_UpdateRamCRC();
 		STC3115_WriteDataToRam(RAMData.db);
 	}
-  
+
   return(res);    /* return -1 if I2C error or STC3115 not present */
 }
 
@@ -797,16 +800,16 @@ int GasGauge_Initialization(STC3115_ConfigData_TypeDef *ConfigData, STC3115_Batt
 * Input          : None
 * Return         : 0 is ok, -1 if I2C error
 *******************************************************************************/
-int GasGauge_Reset(void)  
+int GasGauge_Reset(void)
 {
   int res;
 
   /* reset RAM */
-  RAMData.reg.TestWord=0;  
+  RAMData.reg.TestWord=0;
   RAMData.reg.STC3115_State = STC3115_UNINIT;
   res = STC3115_WriteDataToRam(RAMData.db);
   if(res != STC3115_OK) return res;
-  
+
   /* reset STC3115*/
   res = STC3115_WriteByte(STC3115_REG_CTRL, STC3115_PORDET);  /*   set Soft Reset */
 
@@ -824,20 +827,20 @@ int GasGauge_Reset(void)
 int GasGauge_Stop(void)
 {
   int res;
-  
+
   /*Save context in RAM*/
   STC3115_ReadRamData(RAMData.db);
   RAMData.reg.STC3115_State= STC3115_POWERDN;
-  
+
   /* update the crc */
   STC3115_UpdateRamCRC();
   STC3115_WriteDataToRam(RAMData.db);
-   
+
   /*STC3115 Power down (ie Standby mode with RAM content retention))*/
   res=STC3115_Powerdown();
   if (res!=0) return (-1);  /* error */
 
-  return(0);  
+  return(0);
 }
 
 
@@ -857,32 +860,32 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
   /*Read STC3115 status registers */
   res=STC3115_GetStatusWord();
 
-  if (res<0) return(res);  /* return if I2C error or STC3115 not responding */  
+  if (res<0) return(res);  /* return if I2C error or STC3115 not responding */
   BatteryData->StatusWord = res;
-  
+
   /* check STC3115 RAM status (battery has not been changed) */
   STC3115_ReadRamData(RAMData.db);
   if ( (RAMData.reg.TestWord!= RAM_TESTWORD) || (STC3115_CalcRamCRC8(RAMData.db,STC3115_RAM_SIZE)!=0) )
   {
     /* if RAM non ok, reset it and set init state */
-    STC3115_InitRamData(ConfigData); 
+    STC3115_InitRamData(ConfigData);
     RAMData.reg.STC3115_State = STC3115_INIT;
-  }  
-  
+  }
+
   /* check battery presence status */
   if ((BatteryData->StatusWord & ((int)STC3115_BATFAIL<<8)) != 0)
   {
     /*Battery disconnection has been detected			*/
-		
+
 	/*BATD pin level is over 1.61 or Vcc is below 2.7V	*/
 	BatteryData->Presence = 0;
-	
+
 	/*HW and SW state machine reset*/
     GasGauge_Reset();
 
     return (-1);
   }
-	
+
   /* check STC3115 running mode*/
   if ((BatteryData->StatusWord & STC3115_GG_RUN) == 0) //Gas gauge no more running (in Standby mode)
   {
@@ -896,22 +899,22 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
 		{
 			STC3115_Startup(ConfigData);  /* if INIT state, initialize STC3115*/
 		}
-		
+
     RAMData.reg.STC3115_State = STC3115_INIT;
   }
-  
+
   /* --------------------------------- Read battery data ------------------------------- */
 
-  res=STC3115_ReadBatteryData(BatteryData);  
+  res=STC3115_ReadBatteryData(BatteryData);
   if (res!=0) return(-1); /* abort in case of I2C failure */
-  
-  
+
+
   /* ------------------------------- battery data report ------------------------------- */
   /* check INIT state */
   if (RAMData.reg.STC3115_State == STC3115_INIT)
   {
     /* INIT state, wait for current & temperature value available: */
-    if (BatteryData->ConvCounter > VCOUNT) 
+    if (BatteryData->ConvCounter > VCOUNT)
     {
         RAMData.reg.STC3115_State = STC3115_RUNNING;
 		/*Battery is connected*/
@@ -928,23 +931,23 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
   }
   else /* STC3115 running */
   {
-  
+
 	/* ---------- process SW algorithms -------- */
-		
+
 	/* early empty compensation */
 	if (BatteryData->Voltage < APP_CUTOFF_VOLTAGE)
 		BatteryData->SOC = 0;
 	else if (BatteryData->Voltage < (APP_CUTOFF_VOLTAGE+VOLTAGE_SECURITY_RANGE))
 	{
-		// Recommended software security: scaling down the SOC if voltage is considered too close to the cutoff voltage. (no accuracy effect) 
-		BatteryData->SOC = BatteryData->SOC * (BatteryData->Voltage - APP_CUTOFF_VOLTAGE) / VOLTAGE_SECURITY_RANGE;   
+		// Recommended software security: scaling down the SOC if voltage is considered too close to the cutoff voltage. (no accuracy effect)
+		BatteryData->SOC = BatteryData->SOC * (BatteryData->Voltage - APP_CUTOFF_VOLTAGE) / VOLTAGE_SECURITY_RANGE;
 	}
 
 	/* Battery charge value calculation */
 	BatteryData->ChargeValue = ConfigData->Cnom * BatteryData->SOC / MAX_SOC;
 
 	if ((BatteryData->StatusWord & STC3115_VMODE) == 0) /* mixed mode only*/
-	{  
+	{
 		/*Lately fully compensation*/
 		if(BatteryData->Current > APP_EOC_CURRENT && BatteryData->SOC > 990)
 		{
@@ -952,7 +955,7 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
 			STC3115_WriteWord(STC3115_REG_SOC, 99*512); //99% (99*512= 50688) //force a new SoC displayed by fuel gauge
 		}
 
-		
+
 		/*Remaining time calculation*/
 		if(BatteryData->Current < 0)
 		{
@@ -962,20 +965,20 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
 		}
 		else
 			BatteryData->RemTime = -1; /* means no estimated time available */
-		
+
 	}
 	else /* voltage mode only */
 	{
 		BatteryData->Current=0;
 		BatteryData->RemTime = -1;
 	}
-	
+
 	//SOC min/max clamping
 	if(BatteryData->SOC > 1000) BatteryData->SOC = MAX_SOC;
 	if(BatteryData->SOC < 0) BatteryData->SOC = 0;
 
   }
-      
+
   /* save periodically the last valid SOC to internal RAM (in case of future Restore process) */
   {
 	  RAMData.reg.HRSOC = BatteryData->HRSOC;
@@ -1000,7 +1003,7 @@ int GasGauge_Task(STC3115_ConfigData_TypeDef *ConfigData,STC3115_BatteryData_Typ
 int STC3115_SetPowerSavingMode(void)
 {
   int res;
-  
+
   /* Read the mode register*/
   res = STC3115_ReadByte(STC3115_REG_MODE);
 
@@ -1021,14 +1024,14 @@ int STC3115_SetPowerSavingMode(void)
 int STC3115_StopPowerSavingMode(void)
 {
   int res;
-  
+
   /* Read the mode register*/
   res = STC3115_ReadByte(STC3115_REG_MODE);
 
   /*STC3115 is in power saving mode by default, cannot be set dynamically in mixed mode.		*/
   /*Change stc3115_Driver.h VMODE parameter, and connect an external sense resistor to STC3115	*/
-  if (VMODE != MIXED_MODE) return (!STC3115_OK); 
-  
+  if (VMODE != MIXED_MODE) return (!STC3115_OK);
+
   /* Set the VMODE bit to 0 */
   res = STC3115_WriteByte(STC3115_REG_MODE, (res & ~STC3115_VMODE));
   if (res!= STC3115_OK) return (res);
@@ -1067,7 +1070,7 @@ int STC3115_AlarmSet(void)
 int STC3115_AlarmStop(void)
 {
   int res;
-  
+
   /* Read the mode register*/
   res = STC3115_ReadByte(STC3115_REG_MODE);
 
@@ -1083,7 +1086,7 @@ int STC3115_AlarmStop(void)
 * Function Name  : STC3115_AlarmGet
 * Description    : Return the ALM status
 * Input          : None
-* Return         : ALM status 00 : no alarm 
+* Return         : ALM status 00 : no alarm
 *                             01 : SOC alarm
 *                             10 : Voltage alarm
 *                             11 : SOC and voltage alarm
@@ -1091,11 +1094,11 @@ int STC3115_AlarmStop(void)
 int STC3115_AlarmGet(void)
 {
   int res;
-  
+
   /* Read the mode register*/
   res = STC3115_ReadByte(STC3115_REG_CTRL);
 	if (res== -1) return (res);
-	
+
   res = res >> 5;
 
    return (res);
@@ -1111,7 +1114,7 @@ int STC3115_AlarmGet(void)
 int STC3115_AlarmClear(void)
 {
   int res;
-  
+
   /* clear ALM bits*/
   res = STC3115_WriteByte(STC3115_REG_CTRL, 0x01);
   if (res!= STC3115_OK) return (res);
@@ -1130,9 +1133,9 @@ int STC3115_AlarmSetVoltageThreshold(STC3115_ConfigData_TypeDef *ConfigData, int
 {
   int res;
   int value;
-  
+
   ConfigData->Alm_Vbat = VoltThresh;
-    
+
   value= ((long)(ConfigData->Alm_Vbat << 9) / VoltageFactor); /* LSB=8*2.2mV */
   res = STC3115_WriteByte(STC3115_REG_ALARM_VOLTAGE, value);
   if (res!= STC3115_OK) return (res);
@@ -1154,7 +1157,7 @@ int STC3115_AlarmSetSOCThreshold(STC3115_ConfigData_TypeDef *ConfigData, int SOC
   ConfigData->Alm_SOC = SOCThresh;
   res = STC3115_WriteByte(STC3115_REG_ALARM_SOC, ConfigData->Alm_SOC*2);
   if (res!= STC3115_OK) return (res);
-  
+
   return (STC3115_OK);
 }
 

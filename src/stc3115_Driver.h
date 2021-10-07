@@ -118,7 +118,7 @@ typedef struct  {
   int ChargeValue;    	/* battery remaining capacity in mAh 					*/
   int RemTime;        	/* battery remaining operating time during discharge 	*/
  } STC3115_BatteryData_TypeDef;
- 
+
 /* stc3115 RAM registers structure -------------------------------------------- */
 static union InternalRAM {
   unsigned char db[STC3115_RAM_SIZE];  /* last byte holds the CRC 						*/
@@ -148,7 +148,7 @@ extern "C"				//c++
 
 
 int GasGauge_Initialization(STC3115_ConfigData_TypeDef*, STC3115_BatteryData_TypeDef*);
-int GasGauge_Reset(void); 
+int GasGauge_Reset(void);
 int GasGauge_Stop(void);
 int GasGauge_Task(STC3115_ConfigData_TypeDef*, STC3115_BatteryData_TypeDef*);
 
@@ -172,6 +172,6 @@ int STC3115_GetRunningCounter(void);
 #endif /* __Gasgauge_H */
 
 
- 
- 
+
+
 /**** END OF FILE ****/
