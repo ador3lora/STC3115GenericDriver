@@ -111,14 +111,14 @@ typedef struct  {
   int SOC;            	/* battery relative SOC (%) in 0.1% 					*/
   int Voltage;        	/* battery voltage in mV 								*/
   int Current;        	/* battery current in mA 								*/
-  int Temperature;    	/* battery temperature in 0.1°C 						*/
+  int Temperature;    	/* battery temperature in 0.1?C 						*/
   int ConvCounter;		/* STC3115 convertion counter in 0.5s					*/
   int OCV;				/* battery relax voltage in mV 							*/
   int Presence;			/* battery presence										*/
   int ChargeValue;    	/* battery remaining capacity in mAh 					*/
   int RemTime;        	/* battery remaining operating time during discharge 	*/
  } STC3115_BatteryData_TypeDef;
-
+ 
 /* stc3115 RAM registers structure -------------------------------------------- */
 static union InternalRAM {
   unsigned char db[STC3115_RAM_SIZE];  /* last byte holds the CRC 						*/
@@ -148,7 +148,7 @@ extern "C"				//c++
 
 
 int GasGauge_Initialization(STC3115_ConfigData_TypeDef*, STC3115_BatteryData_TypeDef*);
-int GasGauge_Reset(void);
+int GasGauge_Reset(void); 
 int GasGauge_Stop(void);
 int GasGauge_Task(STC3115_ConfigData_TypeDef*, STC3115_BatteryData_TypeDef*);
 
@@ -172,6 +172,6 @@ int STC3115_GetRunningCounter(void);
 #endif /* __Gasgauge_H */
 
 
-
-
+ 
+ 
 /**** END OF FILE ****/
