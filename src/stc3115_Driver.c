@@ -354,7 +354,7 @@ int STC3115_CheckI2cDeviceId(void)
 *******************************************************************************/
 int STC3115_GetRunningCounter(void)
 {
-  unsigned short value;
+  int value;
   int status;
 
   /* read STC3115_REG_COUNTER */
