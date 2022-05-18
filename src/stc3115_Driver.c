@@ -22,9 +22,9 @@ static int STC3115_WriteDataToRam(unsigned char *RamData);
 *******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#include "stc3115_Driver.h" 
+#include "stc3115_Driver.h"
 #include "stc3115_Battery.h"
-#include "stc3115_I2C.h" 
+#include "stc3115_I2C.h"
 
 /*
   ===============================================================================
@@ -33,104 +33,104 @@ static int STC3115_WriteDataToRam(unsigned char *RamData);
 
 	This driver is dedicated to STC3115 battery monitoring IC management, it allows
 	the stc3115 to be configured, and used without external software.
-	
-	++ stc3115_Driver.c file contains the functions to initialize and report the 
+
+	++ stc3115_Driver.c file contains the functions to initialize and report the
 			battery state based on STC3115 algorithms.
-		- Driver contains its own I2C access functions, they have to be linked with 
-			I2C driver interface  functions. HW system have to support multi I2C access 
-			commands to guaranty the data integrity during the 16 bits register R/W 
+		- Driver contains its own I2C access functions, they have to be linked with
+			I2C driver interface  functions. HW system have to support multi I2C access
+			commands to guaranty the data integrity during the 16 bits register R/W
 			operations.
-		- First part of the driver is composed by driver own functions, which should 
+		- First part of the driver is composed by driver own functions, which should
 			not be accessed by external functions.
-		- Then the GasGauge functions are the main interface functions which have to 
-			be used by the application to initialize, monitor and stop the STC3115 
+		- Then the GasGauge functions are the main interface functions which have to
+			be used by the application to initialize, monitor and stop the STC3115
 			device.
-		- Power saving functions can be used to manage the STC3115 operating mode 
-			(mixed mode or Voltage mode). These two functions have to be called by 
-			external program to switch the STC3115 operating mode after STC3115 
+		- Power saving functions can be used to manage the STC3115 operating mode
+			(mixed mode or Voltage mode). These two functions have to be called by
+			external program to switch the STC3115 operating mode after STC3115
 			initialization.
 		- Alarm management functions have to be called to set, stop, get, clear and
 			change alarm thresholds after STC3115 initialization.
-		- The relaxation register can also be updated after initialization thanks to 
+		- The relaxation register can also be updated after initialization thanks to
 			the STC3115_RelxTmrSet.
-	
-	++ stc3115_Driver.h file defines the STC3115 static numbers, driver API 
-			structures and driver API functions.	
+
+	++ stc3115_Driver.h file defines the STC3115 static numbers, driver API
+			structures and driver API functions.
 		- STC3115_BatteryData_TypeDef is filled by the driver with battery state.
-		- STC3115_ConfigData_TypeDef is filled by the driver with battery 
+		- STC3115_ConfigData_TypeDef is filled by the driver with battery
 			configuration data from stc3115_Battery.h
 		- RAMData is the RAM memory map description, used internally of the driver.
 			Have no to be modified by external accesses.
-	
-	++ stc3115_Battery.h file is used to describe the battery and application 
+
+	++ stc3115_Battery.h file is used to describe the battery and application
 			configurations.
-	
-	++ stc3115_I2C.c file is used to interface STC3115 driver I2C functions with 
+
+	++ stc3115_I2C.c file is used to interface STC3115 driver I2C functions with
 		application I2C functions.
-		
+
 	++ stc3115_I2C.h file contains the stc3115_I2C.c function declarations.
 
   ===============================================================================
                     ##### How to use STC3115 driver #####
   ===============================================================================
 
-	++ 	Update 	I2C_Write and I2C_Read functions with application I2C driver functions 
+	++ 	Update 	I2C_Write and I2C_Read functions with application I2C driver functions
 		in stc3115_I2C.C file.
-							
-	++	Initialize STC3115 dedicated hardware externally of the driver (I2C 
-			interface, GPIOs...)			
-	
+
+	++	Initialize STC3115 dedicated hardware externally of the driver (I2C
+			interface, GPIOs...)
+
 	++	Fill STC3115_Battery.h with battery and application parameters
-	
+
 	++  Call one time the the GasGauge_Initialization function
-	
+
 			Parameters:
-				- STC3115_ConfigData_TypeDef parameter is filled with STC3115_Battery.h 
+				- STC3115_ConfigData_TypeDef parameter is filled with STC3115_Battery.h
 					data by the driver
-				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm 
+				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm
 					results and returns the battery state to application
-				
+
 			Function description:
 				- Initialize SW structures
-				- Check battery history: new battery, swapped battery, already connected 
+				- Check battery history: new battery, swapped battery, already connected
 					battery
 				- Initializes STC3115 registers accordingly to battery history
 				- Initializes STC3115 RAM memory accordingly to battery history
-			
+
 			Returns:
-				- (-1) is returned when STC3115 cannot be accessed: I2C bus is not 
+				- (-1) is returned when STC3115 cannot be accessed: I2C bus is not
 					properly configured or STC3115 is not power supplied
 				- (0) is returned if initialization succeeds.
-			
-	++ Call the GasGauge_Task function when battery information is needed: 
+
+	++ Call the GasGauge_Task function when battery information is needed:
 			every 1 to 30 seconds (no frequency accuracy needed)
-		
+
 			Parameters:
-				- STC3115_ConfigData_TypeDef parameter is used in case of STC3115 has to be 
+				- STC3115_ConfigData_TypeDef parameter is used in case of STC3115 has to be
 					initialized again
-				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm 
+				- STC3115_BatteryData_TypeDef parameter is filled with STC3115 algorithm
 					results and returns the battery state to application
-				
+
 			Function description:
 				- Check STC3115, battery and application state
 				- if battery is well present battery data are updated
 				- Available battery state information are returned
-			
+
 			Returns:
-				- (-1) is returned when STC3115 cannot be accessed (I2C bus is busy or 
+				- (-1) is returned when STC3115 cannot be accessed (I2C bus is busy or
 					STC3115 is not power supplied) or when BATD/CD pin is in high level state.
 				- (0) is returned if only battery SOC,Voltage and OCV data are available
 				- (1) is returned if every STC3115_BatteryData_TypeDef data are available.
-				
+
 	++ call the GasGauge_Stop function during the application switch off sequence
 		 This will stop the STC3115 and save energy. This will help to recover the
 		 battery context during the next GasGauge_Initialization function.
-				
+
 	++ GasGauge_Reset function has not to be used by default.
 		 This function has to be called only in abnormal use cases.
 				- (-1) is returned when STC3115 cannot be stopped
 				- (0) is returned if reset operation succeeds
-				
+
 */
 
 /* ******************************************************************************** */
@@ -154,7 +154,7 @@ static int STC3115_ReadByte(int RegAddress)
   int res;
 
   res = I2C_Read(1, RegAddress , data);
-	
+
   if (res >= 0)
   {
     /* no error */
@@ -181,7 +181,7 @@ static int STC3115_WriteByte(int RegAddress, unsigned char Value)
 
   data[0]= Value;
   res = I2C_Write(1, RegAddress , data);
-	
+
   return(res);
 
 }
@@ -200,7 +200,7 @@ static int STC3115_ReadWord(int RegAddress)
   int res;
 
   res = I2C_Read(2, RegAddress , data);
-  
+
   if (res >= 0)
   {
     /* no error */
@@ -220,7 +220,7 @@ int STC3115_ReadUnsignedWord(unsigned short RegAddress, unsigned short * RegData
   int status;
 
   status = I2C_Read(2, RegAddress , data8);
-  
+
   if (status >= 0)
   {
     /* no error */
@@ -245,11 +245,11 @@ static int STC3115_WriteWord(int RegAddress, int Value)
   int res;
   unsigned char data[2];
 
-  data[0]= Value & 0xff; 
+  data[0]= Value & 0xff;
   data[1]= (Value>>8) & 0xff;
-  
+
   res = I2C_Write(2, RegAddress , data);
-	
+
   return(res);
 
 }
@@ -265,7 +265,7 @@ static int STC3115_ReadBytes(unsigned char *data,int RegAddress,int nbr)
   int res;
 
   res = I2C_Read(nbr, RegAddress , data);
-  
+
   return(res);
 }
 
@@ -281,7 +281,7 @@ static int STC3115_WriteBytes(unsigned char *data,int RegAddress,int nbr)
   int res;
 
   res = I2C_Write(nbr, RegAddress , data);
-	
+
   return(res);
 }
 
@@ -354,7 +354,7 @@ int STC3115_CheckI2cDeviceId(void)
 *******************************************************************************/
 int STC3115_GetRunningCounter(void)
 {
-  int value;
+  unsigned short value;
   int status;
 
   /* read STC3115_REG_COUNTER */
