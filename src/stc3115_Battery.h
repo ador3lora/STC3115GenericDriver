@@ -10,7 +10,7 @@
 /* Battery parameters define -------------------------------------------------*/
 
 #define BATT_CAPACITY   2950    /* Battery nominal capacity in mAh */
-#define BATT_RINT       188     /* Internal battery impedance in mOhms, 0 if unknown */
+#define BATT_RINT       0       /* Internal battery impedance in mOhms, 0 if unknown */
 
 /* OCVTAB (open circuit voltage curve, ie when the battery is relaxed (no charge or discharge) */
 #define OCV_OFFSET_TAB  { 0, -30, -33, -17, -15, -22, -14, -9, -12, -23, -51, -54, -61, -97, -121, -127 }
